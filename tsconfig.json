@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es2021",
+    "lib": ["es2021"],
+    "outDir": "./dist/",
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "useUnknownInCatchVariables": false
+  },
+  "include": ["credentials/**/*", "nodes/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

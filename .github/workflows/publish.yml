@@ -1,0 +1,32 @@
+name: publish
+
+# Trusted publishing (OIDC), not a stored token. See bouncewatch/mcp for why.
+#
+# n8n will not verify a community node published from a laptop: since 1 May 2026
+# a verified node must be published by a workflow, carrying provenance. Trusted
+# publishing satisfies both without a secret existing anywhere.
+#
+# --ignore-scripts on install is not a shortcut: n8n-workflow drags in
+# isolated-vm, which builds native code we neither run nor ship. This package has
+# no runtime dependencies at all — n8n-workflow is here for its types.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm publish --access public

@@ -1,0 +1,58 @@
+{
+  "name": "n8n-nodes-bouncewatch",
+  "version": "0.1.0",
+  "description": "Bounce Watch company signals for n8n — who raised, who is hiring, who expanded, and when it happened",
+  "keywords": [
+    "n8n-community-node-package",
+    "bouncewatch",
+    "company-signals",
+    "buying-signals",
+    "sales-intelligence",
+    "funding",
+    "prospecting"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/bouncewatch/n8n-nodes-bouncewatch#readme",
+  "author": {
+    "name": "Bounce Watch",
+    "email": "sedat@bouncewatch.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bouncewatch/n8n-nodes-bouncewatch.git"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "npx rimraf dist && tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "lint": "eslint nodes credentials package.json",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/BounceWatchApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/BounceWatch/BounceWatch.node.js",
+      "dist/nodes/BounceWatch/BounceWatchTrigger.node.js"
+    ]
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "gulp": "^5.0.0",
+    "n8n-workflow": "*",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.5.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
