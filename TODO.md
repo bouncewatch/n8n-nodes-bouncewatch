@@ -22,7 +22,20 @@ Düzeltme: isteğe bağlı filtre alanlarında `e.g.` öneki.
 Zorunlu alanlara (Domain, Name) dokunma — boş bırakılınca n8n zaten kırmızı
 uyarı veriyor, orada karışma riski yok.
 
-## 2. Test yok
+## 2. Trigger manuel testte veri göstermiyor  (2026-08-18, demo provasında yakalandı)
+
+`BounceWatchTrigger.poll()` ilk çalıştırmada `null` dönüyor — mevcut olanı
+"görüldü" diye kaydedip tetiklemiyor. Üretimde **doğru**: geçmiş haber değildir.
+
+Ama `Fetch Test Event`'e basan kullanıcı veri görmek ister, n8n'in geleneği de
+o yönde. Şu an ilk basış boş, ikinci basış "Nothing new since the last check."
+— "çalışmıyor" gibi okunuyor. Bu yüzden demo videosundan çıkarıldı.
+
+Düzeltme: `this.getMode() === 'manual'` iken mevcut sinyalleri **döndür ama
+seen'e yazma**. Böylece test verisi görünür, üretimdeki ilk-yoklama davranışı
+bozulmaz.
+
+## 3. Test yok
 
 `package.json`'da `test` script'i yok. n8n'in gönderim ekranı "avoid automatic
 rejection by running `npm run test`" diyor; otomatik inceleme geçti ama bir
