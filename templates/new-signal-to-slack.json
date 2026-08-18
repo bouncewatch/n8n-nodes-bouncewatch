@@ -1,0 +1,79 @@
+{
+  "name": "Post company signals to Slack as they happen",
+  "nodes": [
+    {
+      "parameters": {
+        "minWeight": 3,
+        "limit": 25
+      },
+      "id": "b1a7c0de-0001-4000-8000-000000000001",
+      "name": "New signal at a watched company",
+      "type": "n8n-nodes-bouncewatch.bounceWatchTrigger",
+      "typeVersion": 1,
+      "position": [-220, 0],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Polls the companies this API key watches. The first poll records what is already there without firing — history is not news."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "conditions": [
+            {
+              "id": "c0000000-0000-4000-8000-000000000001",
+              "operator": { "type": "boolean", "operation": "false", "singleValue": true },
+              "leftValue": "={{ $json.unconfirmed }}",
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1a7c0de-0002-4000-8000-000000000002",
+      "name": "Drop unconfirmed",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [40, 0],
+      "notes": "Some signals are inference rather than announcement. They carry `unconfirmed`, and a channel post reads as fact — so they stop here."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "",
+          "mode": "name",
+          "cachedResultName": ""
+        },
+        "text": "=*{{ $json.company.name }}* — {{ $json.label }}\n{{ $json.summary }}\n_{{ $json.date }}{{ $json.date_is_measurement ? ' (picked up on this date, not necessarily when it happened)' : '' }} · weight {{ $json.weight }}/10 · {{ $json.company.country }}_\n{{ $json.company.profile_url }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "b1a7c0de-0003-4000-8000-000000000003",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [300, 0],
+      "webhookId": "",
+      "notes": "Pick your channel here."
+    }
+  ],
+  "connections": {
+    "New signal at a watched company": {
+      "main": [[{ "node": "Drop unconfirmed", "type": "main", "index": 0 }]]
+    },
+    "Drop unconfirmed": {
+      "main": [[{ "node": "Post to Slack", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {},
+  "meta": { "templateCredsSetupCompleted": false }
+}
