@@ -49,11 +49,11 @@ not news.
 
 ## Filters worth knowing
 
-**Minimum Weight.** Signals are weighted 1 to 10. Event attendance, news mentions
-and follower drift sit at 1 or 2 and are about a third of everything held. A floor
-of 3 or 4 keeps a workflow off background chatter. Above 7 you are asking for
-funding rounds, acquisitions and shutdowns, which are under 1% of what happens in
-any window — that is how often they happen, not how well they are seen.
+**Minimum Weight.** Signals are weighted 1 to 10. Background — event attendance,
+news mentions, follower drift — is weighted 1 or 2, so a floor of 3 or 4 keeps a
+workflow off it. A floor above 7 leaves only funding rounds, acquisitions and
+shutdowns; those are rare because they are rare, so use a watch rather than a
+search if that is what you are waiting for.
 
 **Signal Keys.** Comma-separated, for example `recently_funded,key_hire_announced`.
 Run the Taxonomy resource once to list the valid keys. An unrecognised key is
