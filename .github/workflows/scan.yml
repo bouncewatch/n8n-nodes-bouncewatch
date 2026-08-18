@@ -1,0 +1,21 @@
+name: scan
+
+# n8n's own static analyser for community packages, which the verification
+# guidelines ask authors to run before submitting.
+#
+# It lives here rather than on a laptop because the scanner pulls in isolated-vm,
+# which needs Node 22 or newer and fails to build on anything older — silently,
+# with an empty result and exit 1.
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx --yes @n8n/scan-community-package n8n-nodes-bouncewatch
