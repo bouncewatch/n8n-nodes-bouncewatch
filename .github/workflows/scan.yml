@@ -6,10 +6,10 @@ name: scan
 # It lives here rather than on a laptop because the scanner pulls in isolated-vm,
 # which needs Node 22 or newer and fails to build on anything older — silently,
 # with an empty result and exit 1.
+# Manual only, and deliberately so: on a release this raced the publish job and
+# scanned whichever version npm still had, which is the previous one.
 on:
   workflow_dispatch:
-  release:
-    types: [published]
 
 jobs:
   scan:
