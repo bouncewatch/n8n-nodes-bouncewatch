@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-bouncewatch",
-  "version": "0.1.0",
-  "description": "Bounce Watch company signals for n8n — who raised, who is hiring, who expanded, and when it happened",
+  "version": "0.1.1",
+  "description": "Bounce Watch company signals for n8n \u2014 who raised, who is hiring, who expanded, and when it happened",
   "keywords": [
     "n8n-community-node-package",
     "bouncewatch",
