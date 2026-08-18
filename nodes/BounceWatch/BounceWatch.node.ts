@@ -5,7 +5,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { mcpCall } from './transport';
 
@@ -337,9 +337,9 @@ export class BounceWatch implements INodeType {
 					out.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
 					continue;
 				}
-				if (error instanceof NodeApiError || error instanceof NodeOperationError) {
-					throw error;
-				}
+				// Always wrapped, never re-thrown raw: n8n wants the node and the item
+				// index attached, and transport.ts has already put a readable message
+				// on whatever arrives here.
 				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 			}
 		}
