@@ -19,8 +19,15 @@ Düzeltme: isteğe bağlı filtre alanlarında `e.g.` öneki.
 | Categories | `funding,hiring` | `e.g. funding,hiring` |
 | Funding Stage | `Series A` | `e.g. Series A` |
 
-Zorunlu alanlara (Domain, Name) dokunma — boş bırakılınca n8n zaten kırmızı
-uyarı veriyor, orada karışma riski yok.
+**Zorunlu alanlar da dahil.** Önce "orada risk yok, n8n kırmızı gösteriyor"
+demiştim — yanlış. Aynı provada `Domain` alanı da placeholder yüzünden dolu
+sanıldı; kırmızı çerçeve ve ⚠ ikonu çok ince sinyaller, placeholder metni
+girilmiş değer gibi okunuyor. İki kez arka arkaya oldu.
+
+| Alan | Şimdi | Olacak |
+|---|---|---|
+| Domain | `stripe.com` | `e.g. stripe.com` |
+| Name | `Stripe` | `e.g. Stripe` |
 
 ## 2. Trigger manuel testte veri göstermiyor  (2026-08-18, demo provasında yakalandı)
 
