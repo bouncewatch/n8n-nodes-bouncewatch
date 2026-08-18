@@ -31,5 +31,8 @@ jobs:
       # outright with EBADENGINE.
       - run: npm install -g npm@latest
       - run: npm ci --ignore-scripts
+      # Same rule set n8n's verification scanner runs, so a release cannot go out
+      # carrying a violation that would fail verification later.
+      - run: npm run lint
       - run: npm run build
       - run: npm publish --access public
