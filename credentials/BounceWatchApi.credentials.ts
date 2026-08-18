@@ -1,5 +1,6 @@
 import type {
 	IAuthenticateGeneric,
+	Icon,
 	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
@@ -9,6 +10,8 @@ export class BounceWatchApi implements ICredentialType {
 	name = 'bounceWatchApi';
 
 	displayName = 'Bounce Watch API';
+
+	icon: Icon = { light: 'file:bouncewatch.svg', dark: 'file:bouncewatch.dark.svg' };
 
 	documentationUrl = 'https://docs.bouncewatch.com/mcp/overview';
 

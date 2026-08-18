@@ -5,7 +5,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { mcpCall } from './transport';
 
@@ -13,7 +13,7 @@ export class BounceWatch implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Bounce Watch',
 		name: 'bounceWatch',
-		icon: 'file:bouncewatch.svg',
+		icon: { light: 'file:bouncewatch.svg', dark: 'file:bouncewatch.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
@@ -72,12 +72,6 @@ export class BounceWatch implements INodeType {
 				default: 'search',
 				options: [
 					{
-						name: 'Search',
-						value: 'search',
-						description: 'Find companies by country, headcount and funding stage',
-						action: 'Search companies',
-					},
-					{
 						name: 'Find by Name',
 						value: 'find',
 						description: 'Look up a company by name and get its domain',
@@ -85,16 +79,22 @@ export class BounceWatch implements INodeType {
 					},
 					{ name: 'Get', value: 'get', description: 'Profile of one company', action: 'Get a company' },
 					{
+						name: 'Get Refresh Status',
+						value: 'refreshStatus',
+						description: 'Check a scan queued by Refresh. Costs no credits.',
+						action: 'Get refresh status',
+					},
+					{
 						name: 'Refresh',
 						value: 'refresh',
 						description: 'Queue a fresh scan of one company',
 						action: 'Refresh a company',
 					},
 					{
-						name: 'Get Refresh Status',
-						value: 'refreshStatus',
-						description: 'Check a scan queued by Refresh. Costs no credits',
-						action: 'Get refresh status',
+						name: 'Search',
+						value: 'search',
+						description: 'Find companies by country, headcount and funding stage',
+						action: 'Search companies',
 					},
 				],
 			},
@@ -135,7 +135,7 @@ export class BounceWatch implements INodeType {
 					{
 						name: 'Get',
 						value: 'get',
-						description: 'Every signal type, grouped by category. Costs no credits',
+						description: 'Every signal type, grouped by category. Costs no credits.',
 						action: 'Get the signal taxonomy',
 					},
 				],
@@ -196,6 +196,14 @@ export class BounceWatch implements INodeType {
 				},
 				options: [
 					{
+						displayName: 'Categories',
+						name: 'categories',
+						type: 'string',
+						default: '',
+						placeholder: 'funding,hiring',
+						description: 'Comma-separated: funding, hiring, business, product, growth, event, milestone, risk',
+					},
+					{
 						displayName: 'Country Code',
 						name: 'country',
 						type: 'string',
@@ -211,6 +219,27 @@ export class BounceWatch implements INodeType {
 						description:
 							'How far back to look. 90 days without a signal filter, up to 365 with one.',
 					},
+					{ displayName: 'Founded After', name: 'founded_after', type: 'number', default: 0 },
+					{ displayName: 'Founded Before', name: 'founded_before', type: 'number', default: 0 },
+					{
+						displayName: 'Funding Stage',
+						name: 'funding_stage',
+						type: 'string',
+						default: '',
+						placeholder: 'Series A',
+						description:
+							'Narrows twice — once by stage, and once by the companies whose stage is known, which is about 60% of those observed',
+					},
+					{
+						displayName: 'Limit',
+						name: 'limit',
+						type: 'number',
+						typeOptions: { minValue: 1, maxValue: 100 },
+						default: 50,
+						description: 'Max number of results to return',
+					},
+					{ displayName: 'Maximum Employees', name: 'max_employees', type: 'number', default: 0 },
+					{ displayName: 'Minimum Employees', name: 'min_employees', type: 'number', default: 0 },
 					{
 						displayName: 'Minimum Weight',
 						name: 'min_weight',
@@ -219,6 +248,13 @@ export class BounceWatch implements INodeType {
 						default: 3,
 						description:
 							'Signals are weighted 1-10. Event attendance and news mentions sit at 1-2 and are about a third of everything held, so 3 or 4 searches on substance.',
+					},
+					{
+						displayName: 'Require All Keys',
+						name: 'require_all_keys',
+						type: 'boolean',
+						default: false,
+						description: 'Whether a company must show every requested signal key, not just one of them',
 					},
 					{
 						displayName: 'Signal Keys',
@@ -230,49 +266,14 @@ export class BounceWatch implements INodeType {
 							'Comma-separated. Use the Taxonomy resource to list valid keys — an unrecognised one is rejected rather than quietly matching nothing.',
 					},
 					{
-						displayName: 'Categories',
-						name: 'categories',
-						type: 'string',
-						default: '',
-						placeholder: 'funding,hiring',
-						description: 'Comma-separated: funding, hiring, business, product, growth, event, milestone, risk',
-					},
-					{ displayName: 'Minimum Employees', name: 'min_employees', type: 'number', default: 0 },
-					{ displayName: 'Maximum Employees', name: 'max_employees', type: 'number', default: 0 },
-					{
-						displayName: 'Funding Stage',
-						name: 'funding_stage',
-						type: 'string',
-						default: '',
-						placeholder: 'Series A',
-						description:
-							'Narrows twice — once by stage, and once by the companies whose stage is known, which is about 60% of those observed',
-					},
-					{ displayName: 'Founded After', name: 'founded_after', type: 'number', default: 0 },
-					{ displayName: 'Founded Before', name: 'founded_before', type: 'number', default: 0 },
-					{
-						displayName: 'Require All Keys',
-						name: 'require_all_keys',
-						type: 'boolean',
-						default: false,
-						description: 'Whether a company must show every requested signal key, not just one of them',
-					},
-					{
 						displayName: 'Sort',
 						name: 'sort',
 						type: 'options',
 						default: 'most_recent',
 						options: [
-							{ name: 'Most Recent', value: 'most_recent' },
 							{ name: 'Most Active', value: 'most_active' },
+							{ name: 'Most Recent', value: 'most_recent' },
 						],
-					},
-					{
-						displayName: 'Limit',
-						name: 'limit',
-						type: 'number',
-						typeOptions: { minValue: 1, maxValue: 100 },
-						default: 25,
 					},
 				],
 			},
@@ -336,7 +337,10 @@ export class BounceWatch implements INodeType {
 					out.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
 					continue;
 				}
-				throw error;
+				if (error instanceof NodeApiError || error instanceof NodeOperationError) {
+					throw error;
+				}
+				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 			}
 		}
 

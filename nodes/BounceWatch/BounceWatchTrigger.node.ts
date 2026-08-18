@@ -20,7 +20,7 @@ export class BounceWatchTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Bounce Watch Trigger',
 		name: 'bounceWatchTrigger',
-		icon: 'file:bouncewatch.svg',
+		icon: { light: 'file:bouncewatch.svg', dark: 'file:bouncewatch.dark.svg' },
 		group: ['trigger'],
 		version: 1,
 		subtitle: '={{ "new signals" }}',
@@ -60,8 +60,8 @@ export class BounceWatchTrigger implements INodeType {
 				name: 'limit',
 				type: 'number',
 				typeOptions: { minValue: 1, maxValue: 100 },
-				default: 25,
-				description: 'Maximum companies to read per poll',
+				default: 50,
+				description: 'Max number of results to return',
 			},
 		],
 	};
