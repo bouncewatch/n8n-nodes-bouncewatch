@@ -43,7 +43,7 @@ export class BounceWatchTrigger implements INodeType {
 				name: 'domain',
 				type: 'string',
 				default: '',
-				placeholder: 'stripe.com',
+				placeholder: 'e.g. stripe.com',
 				description: 'Only report on this company. Leave empty for every company this key watches.',
 			},
 			{

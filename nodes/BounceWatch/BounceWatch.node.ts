@@ -148,7 +148,7 @@ export class BounceWatch implements INodeType {
 				type: 'string',
 				required: true,
 				default: '',
-				placeholder: 'stripe.com',
+				placeholder: 'e.g. stripe.com',
 				displayOptions: {
 					show: {
 						resource: ['signal', 'company', 'watch'],
@@ -162,7 +162,7 @@ export class BounceWatch implements INodeType {
 				type: 'string',
 				required: true,
 				default: '',
-				placeholder: 'Stripe',
+				placeholder: 'e.g. Stripe',
 				displayOptions: { show: { resource: ['company'], operation: ['find'] } },
 			},
 			{
@@ -200,7 +200,7 @@ export class BounceWatch implements INodeType {
 						name: 'categories',
 						type: 'string',
 						default: '',
-						placeholder: 'funding,hiring',
+						placeholder: 'e.g. funding,hiring',
 						description: 'Comma-separated: funding, hiring, business, product, growth, event, milestone, risk',
 					},
 					{
@@ -208,7 +208,7 @@ export class BounceWatch implements INodeType {
 						name: 'country',
 						type: 'string',
 						default: '',
-						placeholder: 'NL',
+						placeholder: 'e.g. NL',
 						description: 'Two-letter country code of the company headquarters',
 					},
 					{
@@ -226,7 +226,7 @@ export class BounceWatch implements INodeType {
 						name: 'funding_stage',
 						type: 'string',
 						default: '',
-						placeholder: 'Series A',
+						placeholder: 'e.g. Series A',
 						description:
 							'Narrows twice — once by stage, and once by the companies whose stage is known, which is about 60% of those observed',
 					},
@@ -261,7 +261,7 @@ export class BounceWatch implements INodeType {
 						name: 'signal_keys',
 						type: 'string',
 						default: '',
-						placeholder: 'recently_funded,key_hire_announced',
+						placeholder: 'e.g. recently_funded,key_hire_announced',
 						description:
 							'Comma-separated. Use the Taxonomy resource to list valid keys — an unrecognised one is rejected rather than quietly matching nothing.',
 					},
@@ -298,7 +298,7 @@ export class BounceWatch implements INodeType {
 						name: 'signal_keys',
 						type: 'string',
 						default: '',
-						placeholder: 'recently_funded,key_hire_announced',
+						placeholder: 'e.g. recently_funded,key_hire_announced',
 					},
 					{
 						displayName: 'Deliver Webhook',
