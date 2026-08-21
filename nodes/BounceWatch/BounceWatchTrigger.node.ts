@@ -47,15 +47,6 @@ export class BounceWatchTrigger implements INodeType {
 				description: 'Only report on this company. Leave empty for every company this key watches.',
 			},
 			{
-				displayName: 'Minimum Weight',
-				name: 'minWeight',
-				type: 'number',
-				typeOptions: { minValue: 0, maxValue: 10 },
-				default: 3,
-				description:
-					'Signals are weighted 1-10. Event attendance and news mentions sit at 1-2, so 3 or 4 keeps the workflow off background chatter.',
-			},
-			{
 				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
@@ -71,36 +62,39 @@ export class BounceWatchTrigger implements INodeType {
 		const seen = new Set(staticData.seen ?? []);
 		const firstRun = staticData.seen === undefined;
 
+		// include_acknowledged keeps the queue from draining. The server hands each
+		// event over once and marks it collected; a polling trigger has to be able
+		// to see the same list again, and dedupe here on the id it gives us.
 		const data = await mcpCall(this, 'check_watches', {
 			domain: this.getNodeParameter('domain', '') as string,
 			limit: this.getNodeParameter('limit', 25) as number,
+			include_acknowledged: true,
 		});
 
-		const minWeight = this.getNodeParameter('minWeight', 3) as number;
-		const companies = (data.companies ?? []) as IDataObject[];
+		const events = (data.events ?? []) as IDataObject[];
 
 		const fresh: INodeExecutionData[] = [];
 		const keys: string[] = [];
 
-		for (const entry of companies) {
-			const company = (entry.company ?? {}) as IDataObject;
-			const signals = (entry.signals ?? []) as IDataObject[];
+		for (const event of events) {
+			const company = (event.company ?? {}) as IDataObject;
+			const signal = (event.signal ?? {}) as IDataObject;
 
-			for (const signal of signals) {
-				// Signals carry no id, so identity is the company plus what happened
-				// plus when. Re-running the same poll must not fire the workflow twice.
-				const key = [company.domain, signal.key, signal.date, signal.summary]
-					.map((part) => String(part ?? ''))
-					.join('|');
+			// Every event carries its own id, so identity needs nothing invented.
+			const key = String(event.event_id ?? '');
+			if (!key) continue;
 
-				keys.push(key);
-				if (seen.has(key)) continue;
+			keys.push(key);
+			if (seen.has(key)) continue;
 
-				const weight = signal.weight;
-				if (typeof weight === 'number' && weight < minWeight) continue;
-
-				fresh.push({ json: { company, ...signal } });
-			}
+			fresh.push({
+				json: {
+					company,
+					watch_label: event.label,
+					noticed_at: event.noticed_at,
+					...signal,
+				},
+			});
 		}
 
 		// Everything already there when the trigger was switched on is history, not

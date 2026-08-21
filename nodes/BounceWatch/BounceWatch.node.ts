@@ -420,7 +420,7 @@ function buildCall(
 			case 'stop':
 				return { tool: 'watch_company', args: { domain: domain(), stop: true } };
 			case 'check':
-				return { tool: 'check_watches', args: {}, splitKey: 'companies' };
+				return { tool: 'check_watches', args: { include_acknowledged: true }, splitKey: 'events' };
 		}
 	}
 
