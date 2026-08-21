@@ -1,0 +1,135 @@
+{
+  "name": "Post company signals from Bounce Watch to Discord",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Post company signals from Bounce Watch to Discord\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nThis template watches the companies on your Bounce Watch watchlist and posts a message to Discord the moment one of them moves. Agencies and consultancies tend to run one channel per client account; the same workflow copied per channel, with the trigger pointed at a single domain, gives each client its own feed.\n\n### How it works\n\nThe Bounce Watch trigger checks your watchlist and hands over each new signal once. A filter drops anything marked unconfirmed, so rumours and inferences never reach the channel. What is left carries the company, what happened, the date and a link to the company page.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Put a few companies on your watchlist first. Use the Bounce Watch node's Watch → Add operation, or add them from your Bounce Watch account. An empty watchlist means an empty trigger.\n3. Connect your Discord credential and pick the server and channel on the last node.\n\nChecking the watchlist costs no credits. An empty run means nothing matched your watches, not that those companies were quiet.\n\n### Customization tips\n\nSet the Domain field on the trigger to a single company and copy the workflow per client, so each account gets its own channel. Raise the importance threshold if a channel is only meant to carry the big moments.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "minWeight": 3,
+        "limit": 25
+      },
+      "id": "bw0113-0000-4000-8000-000000000113",
+      "name": "New signal at a watched company",
+      "type": "n8n-nodes-bouncewatch.bounceWatchTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Set Domain to a single company to give one client account its own channel."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0114-0000-4000-8000-000000000114",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !$json.unconfirmed }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0115-0000-4000-8000-000000000115",
+      "name": "Drop unconfirmed",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Some signals are inference rather than announcement, and a channel post reads as fact — so they stop here."
+    },
+    {
+      "parameters": {
+        "content": "=**{{ $json.company.name }}** — {{ $json.label }}\n{{ $json.summary }}\n{{ $json.date }}{{ $json.date_is_measurement ? \" (date recorded)\" : \"\" }} · {{ $json.company.country }}\n{{ $json.company.profile_url }}",
+        "guildId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": ""
+        },
+        "options": {},
+        "resource": "message",
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": ""
+        }
+      },
+      "id": "bw0116-0000-4000-8000-000000000116",
+      "name": "Post to Discord",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "Pick your server and channel here."
+    }
+  ],
+  "connections": {
+    "New signal at a watched company": {
+      "main": [
+        [
+          {
+            "node": "Drop unconfirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Drop unconfirmed": {
+      "main": [
+        [
+          {
+            "node": "Post to Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

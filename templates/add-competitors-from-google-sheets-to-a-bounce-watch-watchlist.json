@@ -1,0 +1,199 @@
+{
+  "name": "Add competitors from Google Sheets to a Bounce Watch watchlist",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Add competitors from Google Sheets to a Bounce Watch watchlist\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nA spreadsheet is where most competitor lists actually live, and it is where people keep adding to them. This workflow makes that sheet the source of truth for what Bounce Watch is monitoring.\n\n### How it works\n\nA daily schedule reads the sheet. A filter drops the rows with no domain, because a watch is keyed on one. Every remaining row goes to the Bounce Watch node, which adds the watch and labels it with whatever the sheet calls that company. Adding a company that is already watched updates the existing watch instead of creating a second one, so re-reading the whole sheet every day is safe and cheap.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Pick your Google Sheets credential, then choose the spreadsheet and tab on the read node.\n3. Your sheet needs a Domain column and, optionally, a Company column for the label.\n4. In the watch options, raise the importance floor if you only want the big moments.\n\nAdding and collecting cost no credits. An empty run means nothing matched the filters, not that those companies were quiet.\n\n### Customization tips\n\nRestrict each watch to a few signal types if you only care about launches or funding. Pair this with the Bounce Watch trigger, and every name someone adds to the sheet starts producing alerts within the day.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Read the sheet\n\nDaily pass over the competitor list.\nRows without a domain stop here.",
+        "height": 300,
+        "width": 680,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Start watching\n\nRe-adding an existing watch updates it\nrather than creating a duplicate.",
+        "height": 300,
+        "width": 200,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        870,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "bw0080-0000-4000-8000-000000000080",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sheet1"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        }
+      },
+      "id": "bw0081-0000-4000-8000-000000000081",
+      "name": "Read the competitor list",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Pick the spreadsheet and tab. The sheet needs a Domain column."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0082-0000-4000-8000-000000000082",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !!$json.Domain }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0083-0000-4000-8000-000000000083",
+      "name": "Rows with a domain",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "A watch is keyed on a domain, so a row without one cannot be matched to a company."
+    },
+    {
+      "parameters": {
+        "resource": "watch",
+        "operation": "add",
+        "domain": "={{ $json.Domain.toString().toLowerCase().replace(/^https?:\\/\\//, \"\").replace(/^www\\./, \"\").split(\"/\")[0] }}",
+        "watchOptions": {
+          "label": "={{ $json.Company || $json.Domain }}",
+          "min_weight": 3
+        }
+      },
+      "id": "bw0084-0000-4000-8000-000000000084",
+      "name": "Add to the watchlist",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Adding a company that is already watched updates the watch rather than creating a second one."
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Read the competitor list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read the competitor list": {
+      "main": [
+        [
+          {
+            "node": "Rows with a domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rows with a domain": {
+      "main": [
+        [
+          {
+            "node": "Add to the watchlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

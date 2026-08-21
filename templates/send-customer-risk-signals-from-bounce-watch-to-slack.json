@@ -1,0 +1,258 @@
+{
+  "name": "Send customer risk signals from Bounce Watch to Slack",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Send customer risk signals from Bounce Watch to Slack\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nChurn is rarely a surprise to the customer. Layoffs, a founder leaving, a pivot — the account team usually finds out after the renewal conversation has already gone badly. This workflow puts those signals in front of them first.\n\n### How it works\n\nA daily schedule starts the run. A Settings node holds your customer domains as a list. The Bounce Watch node searches the risk category — shutdown, layoffs, a senior departure, a pivot — across the index, and a filter keeps only the companies on your list. What is left is posted to Slack, one message per customer, with each signal marked when it is a rumour rather than an announcement.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Put your customer domains into Customer list.\n3. Pick your Slack credential and choose the channel on the last node.\n\nSome risk signals are inference rather than announcement. They are labelled in the message, and they are not grounds for an account review on their own. An empty run means nothing matched the filters, not that those companies were quiet.\n\n### Customization tips\n\nFor a long customer list, watch the accounts instead and use the Bounce Watch trigger — a watchlist scales further than a filter. Narrow the search to specific signal keys if layoffs are the only thing you want to hear about.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Your customers\n\nDomains live in one Settings node.\nPaste the list you already keep.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Risk signals\n\nShutdowns, layoffs, departures, pivots.\nOnly your customers get through.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        630,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "content": "## Tell the account team\n\nOne message per customer.\nRumours are labelled as rumours.",
+        "height": 300,
+        "width": 200,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        -170
+      ],
+      "id": "sticky-section-3",
+      "name": "Section 3"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "bw0091-0000-4000-8000-000000000091",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0092-0000-4000-8000-000000000092",
+              "name": "customer_domains",
+              "type": "array",
+              "value": "={{ [\"customer-one.com\", \"customer-two.com\", \"customer-three.com\"] }}"
+            },
+            {
+              "id": "as0093-0000-4000-8000-000000000093",
+              "name": "lookback_days",
+              "type": "number",
+              "value": "={{ 7 }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0094-0000-4000-8000-000000000094",
+      "name": "Customer list",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Replace these with your own customer domains."
+    },
+    {
+      "parameters": {
+        "resource": "signal",
+        "operation": "search",
+        "splitSignals": true,
+        "filters": {
+          "categories": "risk",
+          "days": "={{ $json.lookback_days }}",
+          "limit": 100,
+          "sort": "most_recent"
+        }
+      },
+      "id": "bw0095-0000-4000-8000-000000000095",
+      "name": "Risk signals across the index",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        700,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Shutdowns, layoffs, senior departures and pivots."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0096-0000-4000-8000-000000000096",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $('Customer list').first().json.customer_domains.includes($json.company.domain) }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0097-0000-4000-8000-000000000097",
+      "name": "Only your customers",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        0
+      ],
+      "notes": "For a long customer list, watch the accounts instead — a watchlist scales further than a filter."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "",
+          "mode": "name",
+          "cachedResultName": ""
+        },
+        "text": "=⚠️ *{{ $json.company.name }}*\n{{ $json.signals.map(s => \"• \" + s.label + \" — \" + s.date + (s.date_is_measurement ? \" (date recorded)\" : \"\") + (s.unconfirmed ? \" — rumour, not an announcement\" : \"\") + (s.summary ? \"\\n  \" + s.summary : \"\")).join(\"\\n\") }}\n{{ $json.company.profile_url }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "bw0098-0000-4000-8000-000000000098",
+      "name": "Alert the account team",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        0
+      ],
+      "notes": "Pick your channel here."
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Customer list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer list": {
+      "main": [
+        [
+          {
+            "node": "Risk signals across the index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk signals across the index": {
+      "main": [
+        [
+          {
+            "node": "Only your customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only your customers": {
+      "main": [
+        [
+          {
+            "node": "Alert the account team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

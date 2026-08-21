@@ -1,0 +1,303 @@
+{
+  "name": "Summarise weekly competitor news from Bounce Watch with OpenAI to email",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Summarise weekly competitor news from Bounce Watch with OpenAI to email\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nWatching three or four competitors by hand means opening a lot of tabs and reading a lot of nothing. This workflow pulls each of their timelines once a week, has OpenAI write the digest, and emails it to you.\n\n### How it works\n\nA Monday schedule starts the run. A Settings node holds the competitor domains as a list, and a split node turns that list into one item per company. Each one goes to Bounce Watch for its dated timeline. An aggregate node gathers every timeline into a single item, and OpenAI writes the digest from it. The prompt is explicit about the two things a summary usually gets wrong: dates that record when a change was measured are not claims about when it happened, and an empty timeline is not evidence that a company was quiet.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Put your competitor domains into Competitor list.\n3. Connect your OpenAI credential and pick a model.\n4. Fill in the From and To addresses on the email node and pick your SMTP credential.\n\n### Customization tips\n\nNarrow each timeline with signal keys or categories if you only care about product launches or hiring. Send the digest to Slack instead by swapping the last node.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Your competitor set\n\nDomains live in one Settings node.\nSplit turns the list into one item each.",
+        "height": 300,
+        "width": 680,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Pull each timeline\n\nOne dated timeline per competitor,\nthen gathered into a single item.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        870,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "content": "## Summarise and send\n\nThe prompt states the rules about dates\nand about empty timelines.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        -170
+      ],
+      "id": "sticky-section-3",
+      "name": "Section 3"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "bw0071-0000-4000-8000-000000000071",
+      "name": "Every Monday morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0072-0000-4000-8000-000000000072",
+              "name": "competitors",
+              "type": "array",
+              "value": "={{ [\"competitor-one.com\", \"competitor-two.com\", \"competitor-three.com\"] }}"
+            },
+            {
+              "id": "as0073-0000-4000-8000-000000000073",
+              "name": "lookback_days",
+              "type": "number",
+              "value": "={{ 7 }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0074-0000-4000-8000-000000000074",
+      "name": "Competitor list",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Replace these with the domains you actually watch."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "fieldToSplitOut": "competitors"
+      },
+      "id": "bw0075-0000-4000-8000-000000000075",
+      "name": "One item per competitor",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        700,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "signal",
+        "operation": "getForCompany",
+        "domain": "={{ $json.competitors }}",
+        "splitSignals": false,
+        "filters": {
+          "days": "={{ $('Competitor list').first().json.lookback_days }}",
+          "limit": 25
+        }
+      },
+      "id": "bw0076-0000-4000-8000-000000000076",
+      "name": "Pull the dated timeline",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "One item per company, with the signals nested, so each competitor stays a unit."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "data"
+      },
+      "id": "bw0077-0000-4000-8000-000000000077",
+      "name": "Gather every timeline",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        0
+      ],
+      "notes": "Turns the per-competitor items into one item the prompt can read in full."
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "options": {},
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are writing a short weekly competitor digest for a founder. Rules you must follow. A date marked date_is_measurement is the date the change was recorded, not the date it happened — print it as a plain date and never write that the company did something on that date. A signal marked unconfirmed is inference, not announcement; say so or leave it out. A competitor with no signals in the window has not been shown to be quiet — say that nothing matched this week, never that the company has been inactive. Do not invent numbers, amounts or headcounts that are not in the input. Keep it to a few lines per competitor, plain text, no preamble."
+            },
+            {
+              "content": "={{ $json.data.map(c => (c.company?.name || c.company?.domain) + \" (\" + (c.company?.domain || \"\") + \")\\n\" + ((c.signals || []).length ? c.signals.map(s => \"- [\" + s.date + \"]\" + (s.date_is_measurement ? \" (date recorded)\" : \"\") + \" \" + s.label + (s.unconfirmed ? \" (unconfirmed)\" : \"\") + (s.summary ? \": \" + s.summary : \"\")).join(\"\\n\") : \"- nothing matched this window\")).join(\"\\n\\n\") }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0078-0000-4000-8000-000000000078",
+      "name": "Write the digest",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1420,
+        0
+      ],
+      "notes": "Connect your OpenAI credential and pick a model."
+    },
+    {
+      "parameters": {
+        "fromEmail": "",
+        "toEmail": "",
+        "subject": "=Competitor digest — week of {{ $now.format('d LLL yyyy') }}",
+        "emailFormat": "text",
+        "text": "={{ $json.message?.content || $json.content || $json.text }}",
+        "options": {}
+      },
+      "id": "bw0079-0000-4000-8000-000000000079",
+      "name": "Send the digest",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1660,
+        0
+      ],
+      "notes": "Fill in From and To, and pick your SMTP credential."
+    }
+  ],
+  "connections": {
+    "Every Monday morning": {
+      "main": [
+        [
+          {
+            "node": "Competitor list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Competitor list": {
+      "main": [
+        [
+          {
+            "node": "One item per competitor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per competitor": {
+      "main": [
+        [
+          {
+            "node": "Pull the dated timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pull the dated timeline": {
+      "main": [
+        [
+          {
+            "node": "Gather every timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gather every timeline": {
+      "main": [
+        [
+          {
+            "node": "Write the digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write the digest": {
+      "main": [
+        [
+          {
+            "node": "Send the digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

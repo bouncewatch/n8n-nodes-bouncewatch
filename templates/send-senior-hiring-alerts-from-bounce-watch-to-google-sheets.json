@@ -1,0 +1,212 @@
+{
+  "name": "Send senior hiring alerts from Bounce Watch to Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Send senior hiring alerts from Bounce Watch to Google Sheets\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nA senior hire is a mandate with a budget attached. For a recruiter it says a team is being built; for a seller it says a new decision-maker has just arrived with something to prove. This workflow logs those hires to a spreadsheet every day.\n\n### How it works\n\nA daily schedule starts the run. A Settings node holds the country and the lookback window. The Bounce Watch node searches for announced senior hires in that window and returns one item per company, with the matching signals nested. Each company becomes a row: who they are, what was announced, and the date of the most recent announcement.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Set the country code and the window in Search settings.\n3. Pick your Google Sheets credential, then choose the spreadsheet and tab on the last node.\n\nThe search covers announced hires, not open job ads — two different things that are easy to conflate. An empty run means nothing matched the filters, not that those companies were quiet.\n\n### Customization tips\n\nAdd a headcount band to the filters to keep the sheet to companies of a size you actually work with. Add the open-roles signal keys alongside the hire key if you want the ads as well as the announcements, but expect a much longer list.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Where to look\n\nDaily run, one country, one window.\nEverything you would change lives here.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## The hires\n\nAnnounced senior hires, not open job ads.\nOne row per company.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        630,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "bw0085-0000-4000-8000-000000000085",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0086-0000-4000-8000-000000000086",
+              "name": "country_code",
+              "type": "string",
+              "value": "NL"
+            },
+            {
+              "id": "as0087-0000-4000-8000-000000000087",
+              "name": "lookback_days",
+              "type": "number",
+              "value": "={{ 7 }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0088-0000-4000-8000-000000000088",
+      "name": "Search settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Two-letter country code of the company headquarters, and how far back to look."
+    },
+    {
+      "parameters": {
+        "resource": "signal",
+        "operation": "search",
+        "splitSignals": true,
+        "filters": {
+          "signal_keys": "key_hire_announced",
+          "country": "={{ $json.country_code }}",
+          "days": "={{ $json.lookback_days }}",
+          "limit": 50,
+          "sort": "most_recent"
+        }
+      },
+      "id": "bw0089-0000-4000-8000-000000000089",
+      "name": "Senior hires announced",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        700,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Announced hires only. Add the open-roles keys if you want job ads too, but expect a much longer list."
+    },
+    {
+      "parameters": {
+        "columns": {
+          "value": {
+            "Company": "={{ $json.company.name }}",
+            "Domain": "={{ $json.company.domain }}",
+            "Country": "={{ $json.company.country }}",
+            "Employees": "={{ $json.company.employees }}",
+            "What was announced": "={{ $json.signals.map(s => s.summary || s.label).join(\" | \") }}",
+            "Most recent signal date": "={{ $json.latest_signal_date }}",
+            "Profile": "={{ $json.company.profile_url }}"
+          },
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": []
+        },
+        "options": {},
+        "operation": "append",
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sheet1"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        }
+      },
+      "id": "bw0090-0000-4000-8000-000000000090",
+      "name": "Log each company",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        940,
+        0
+      ],
+      "notes": "Pick the spreadsheet and tab here. Column headers must already exist in the sheet."
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Search settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search settings": {
+      "main": [
+        [
+          {
+            "node": "Senior hires announced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Senior hires announced": {
+      "main": [
+        [
+          {
+            "node": "Log each company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "name": "Send a weekly Bounce Watch watchlist report to Slack",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Send a weekly Bounce Watch watchlist report to Slack\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nLive alerts tell you about one company at a time. A weekly report tells you what the whole list did, and which watches have not earned their place.\n\n### How it works\n\nA Monday schedule collects everything the watchlist has queued since the last collection. That gives two things at once: the events themselves, and the state of every watch — when you set it up and when it last matched. A Settings node turns both into a single message, listing what moved and then naming the watches that have gone a long time without a match. The Slack node posts it as one message rather than one per event.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Put a few companies on your watchlist first. Use the Bounce Watch node's Watch → Add operation, or add them from your Bounce Watch account.\n3. Pick your Slack credential and choose the channel on the last node.\n\nCollecting costs no credits. A watch with no matches is not evidence that the company was quiet — a watch set up this week has simply not had time yet.\n\n### Customization tips\n\nMove the schedule to Friday afternoon if you would rather review the week than open it. Send the same message to email instead by swapping the last node.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Collect the week\n\nEverything queued since the last collection.\nFree to call.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Post it\n\nOne message, not one per event.\nQuiet watches are listed, not judged.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        630,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "bw0051-0000-4000-8000-000000000051",
+      "name": "Every Monday morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "watch",
+        "operation": "check"
+      },
+      "id": "bw0052-0000-4000-8000-000000000052",
+      "name": "Collect watchlist matches",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        460,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Returns only what is new since the last collection, and marks it collected."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0053-0000-4000-8000-000000000053",
+              "name": "report",
+              "type": "string",
+              "value": "=*Watchlist — week of {{ $now.format(\"d LLL yyyy\") }}*\n{{ $json.events_returned }} new signal{{ $json.events_returned === 1 ? \"\" : \"s\" }} across {{ $json.active_watches }} watched compan{{ $json.active_watches === 1 ? \"y\" : \"ies\" }}.\n\n{{ ($json.events || []).map(e => \"• *\" + (e.company?.name || e.company?.domain) + \"* — \" + (e.signal?.label || e.signal?.key) + \" — \" + e.signal?.date + (e.signal?.date_is_measurement ? \" (date recorded)\" : \"\") + (e.signal?.unconfirmed ? \" (unconfirmed)\" : \"\")).join(\"\\n\") || \"_Nothing matched your watches this week._\" }}\n\n_Watches with no match yet:_ {{ ($json.watches || []).filter(w => !w.last_match).map(w => w.domain).join(\", \") || \"none\" }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0054-0000-4000-8000-000000000054",
+      "name": "Build the report",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "A watch with no match is not a quiet company — it may simply be new, or set to a narrow signal list."
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "",
+          "mode": "name",
+          "cachedResultName": ""
+        },
+        "text": "={{ $json.report }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "id": "bw0055-0000-4000-8000-000000000055",
+      "name": "Post the report",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        0
+      ],
+      "notes": "Pick your channel here."
+    }
+  ],
+  "connections": {
+    "Every Monday morning": {
+      "main": [
+        [
+          {
+            "node": "Collect watchlist matches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect watchlist matches": {
+      "main": [
+        [
+          {
+            "node": "Build the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build the report": {
+      "main": [
+        [
+          {
+            "node": "Post the report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

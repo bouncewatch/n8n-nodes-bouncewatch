@@ -1,0 +1,189 @@
+{
+  "scheduleTrigger": {
+    "type": "n8n-nodes-base.scheduleTrigger",
+    "typeVersion": 1.3,
+    "parameters": {
+      "rule": {
+        "interval": [
+          {}
+        ]
+      }
+    }
+  },
+  "set": {
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "parameters": {
+      "options": {},
+      "assignments": {
+        "assignments": [
+          {
+            "id": "4e1e9007-e49b-432d-a4a1-7ecd35c22268",
+            "name": "timestamp_key",
+            "type": "string",
+            "value": "demo_timestamp"
+          }
+        ]
+      }
+    }
+  },
+  "filter": {
+    "type": "n8n-nodes-base.filter",
+    "typeVersion": 2.2,
+    "parameters": {
+      "options": {},
+      "conditions": {
+        "options": {
+          "version": 2,
+          "leftValue": "",
+          "caseSensitive": true,
+          "typeValidation": "strict"
+        },
+        "combinator": "and",
+        "conditions": [
+          {
+            "id": "b65f03ae-26bc-4bc7-a77c-74a072a3d98b",
+            "operator": {
+              "type": "boolean",
+              "operation": "true",
+              "singleValue": true
+            },
+            "leftValue": "={{ !!$json.updated_time && $json.updated_time > $('B1 - Set lastSync').first().json.lastSync }}",
+            "rightValue": ""
+          }
+        ]
+      }
+    }
+  },
+  "hubspot": {
+    "type": "n8n-nodes-base.hubspot",
+    "typeVersion": 2.1,
+    "parameters": {
+      "resource": "company",
+      "companyId": {
+        "__rl": true,
+        "mode": "id",
+        "value": "={{ $json.id }}"
+      },
+      "operation": "update",
+      "updateFields": {
+        "companyDomainName": "={{ $json.properties.domain || $('E1 - Get prospect').item.json.domain || undefined }}",
+        "customPropertiesUi": {
+          "customPropertiesValues": [
+            {
+              "value": "={{ $('E1 - Get prospect').item.json.id }}",
+              "property": "prospectpro_id"
+            },
+            {
+              "value": "={{ $('E1 - Get prospect').item.json.coc }}",
+              "property": "kvk"
+            }
+          ]
+        }
+      },
+      "authentication": "oAuth2"
+    }
+  },
+  "googleSheets": {
+    "type": "n8n-nodes-base.googleSheets",
+    "typeVersion": 4,
+    "parameters": {
+      "range": "A:J",
+      "keyRow": 1,
+      "dataMode": "autoMapInputData",
+      "sheetName": "Jobs",
+      "documentId": "={{ $json.spreadsheetId }}",
+      "requestMethod": "GET",
+      "authentication": "oAuth2"
+    }
+  },
+  "discord": {
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "parameters": {
+      "content": "={{ $json.content }}",
+      "guildId": {
+        "__rl": true,
+        "mode": "list",
+        "value": "1280652666577354803",
+        "cachedResultUrl": "https://discord.com/channels/1280652666577354803",
+        "cachedResultName": "Renz's server"
+      },
+      "options": {},
+      "resource": "message",
+      "channelId": {
+        "__rl": true,
+        "mode": "list",
+        "value": "1280652667408089210",
+        "cachedResultUrl": "https://discord.com/channels/1280652666577354803/1280652667408089210",
+        "cachedResultName": "general"
+      }
+    }
+  },
+  "airtable": {
+    "type": "n8n-nodes-base.airtable",
+    "typeVersion": 2.2,
+    "parameters": {
+      "base": {
+        "__rl": true,
+        "mode": "list",
+        "value": ""
+      },
+      "table": {
+        "__rl": true,
+        "mode": "list",
+        "value": ""
+      },
+      "options": {},
+      "operation": "search",
+      "filterByFormula": "{Active} = TRUE()"
+    }
+  },
+  "slack": {
+    "type": "n8n-nodes-base.slack",
+    "typeVersion": 2.3,
+    "parameters": {
+      "text": "=🚨 *RentalOS Workflow Error*\n\n*Workflow:* {{ $workflow.name }}\n*Failed Node:* {{ $execution.lastNodeExecuted }}\n*Time:* {{ $now.format('MMM D, YYYY – HH:mm') }}\n*Execution ID:* {{ $execution.id }}\n\nPlease check the n8n execution log and follow up with the applicant manually if needed.",
+      "select": "channel",
+      "channelId": {
+        "__rl": true,
+        "mode": "list",
+        "value": "YOUR_SLACK_CHANNEL_ID",
+        "cachedResultName": "your-alerts-channel"
+      },
+      "otherOptions": {},
+      "authentication": "oAuth2"
+    }
+  },
+  "notion": {
+    "type": "n8n-nodes-base.notion",
+    "typeVersion": 2.2,
+    "parameters": {
+      "options": {},
+      "resource": "databasePage",
+      "operation": "getAll",
+      "returnAll": true,
+      "databaseId": {
+        "__rl": true,
+        "mode": "list",
+        "value": "22612359-20f8-80f4-897f-eae0ad313057",
+        "cachedResultUrl": "https://www.notion.so/2261235920f880f4897feae0ad313057",
+        "cachedResultName": "n8n flow - SSL Certificate Expiry Monitoring"
+      },
+      "filterType": "manual"
+    }
+  },
+  "emailSend": {
+    "type": "n8n-nodes-base.emailSend",
+    "typeVersion": 2.1,
+    "parameters": {
+      "options": {
+        "replyTo": "user@example.com",
+        "allowUnauthorizedCerts": false
+      },
+      "subject": "={{ $json.emailSubject }}",
+      "toEmail": "user@example.com",
+      "fromEmail": "user@example.com"
+    }
+  }
+}

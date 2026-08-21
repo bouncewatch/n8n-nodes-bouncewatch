@@ -1,0 +1,267 @@
+{
+  "name": "Build a target account list by size and funding stage with Bounce Watch in Airtable",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Build a target account list by size and funding stage with Bounce Watch in Airtable\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nAn ideal customer profile is only useful once it is a list of names. This workflow turns a size band, a funding stage and a country into rows in Airtable, refreshed every week.\n\n### How it works\n\nA weekly schedule starts the run. A Settings node holds the profile — country, headcount range and funding stage — in one place. The Bounce Watch node searches the index for companies that fit, and returns them as a single result, so a split node turns that into one item per company before Airtable receives it. Each row carries the name, domain, country, headcount, stage and a link to the profile.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Fill in the profile in Target profile. Leave a field empty to drop that constraint.\n3. Connect your Airtable credential and choose the base and table on the last node.\n\nA funding stage narrows twice: once by the stage, and once by the companies whose stage we hold. A short list is as likely to be a gap in what we know as a fact about the market.\n\n### Customization tips\n\nAdd a founding-year range to the filters for an age band. Point the last node at a spreadsheet or your CRM instead if that is where your target list lives.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Describe the target\n\nCountry, headcount band, funding stage.\nAn empty field drops that constraint.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Search and split\n\nThe search returns one result set.\nSplit turns it into one item per company.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        630,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "content": "## Write to Airtable\n\nOne row per company.\nChoose your base and table here.",
+        "height": 300,
+        "width": 200,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        -170
+      ],
+      "id": "sticky-section-3",
+      "name": "Section 3"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "bw0062-0000-4000-8000-000000000062",
+      "name": "Every Monday morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0063-0000-4000-8000-000000000063",
+              "name": "country_code",
+              "type": "string",
+              "value": "NL"
+            },
+            {
+              "id": "as0064-0000-4000-8000-000000000064",
+              "name": "min_employees",
+              "type": "number",
+              "value": "={{ 20 }}"
+            },
+            {
+              "id": "as0065-0000-4000-8000-000000000065",
+              "name": "max_employees",
+              "type": "number",
+              "value": "={{ 200 }}"
+            },
+            {
+              "id": "as0066-0000-4000-8000-000000000066",
+              "name": "funding_stage",
+              "type": "string",
+              "value": "Series A"
+            }
+          ]
+        }
+      },
+      "id": "bw0067-0000-4000-8000-000000000067",
+      "name": "Target profile",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Leave a field empty to drop that constraint from the search."
+    },
+    {
+      "parameters": {
+        "resource": "company",
+        "operation": "search",
+        "filters": {
+          "country": "={{ $json.country_code }}",
+          "min_employees": "={{ $json.min_employees }}",
+          "max_employees": "={{ $json.max_employees }}",
+          "funding_stage": "={{ $json.funding_stage }}",
+          "limit": 50
+        }
+      },
+      "id": "bw0068-0000-4000-8000-000000000068",
+      "name": "Companies that fit the profile",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        700,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Companies whose headcount or stage we do not hold are excluded rather than guessed at."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "fieldToSplitOut": "companies"
+      },
+      "id": "bw0069-0000-4000-8000-000000000069",
+      "name": "One item per company",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "notes": "The search returns a single result set; this turns it into rows."
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Domain": "={{ $json.domain }}",
+            "Country": "={{ $json.country }}",
+            "Employees": "={{ $json.employees }}",
+            "Funding stage": "={{ $json.funding_stage }}",
+            "Profile": "={{ $json.profile_url }}"
+          },
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": []
+        },
+        "options": {},
+        "operation": "create"
+      },
+      "id": "bw0070-0000-4000-8000-000000000070",
+      "name": "Add to the target list",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        0
+      ],
+      "notes": "Choose your base and table, and rename these fields to match your own columns."
+    }
+  ],
+  "connections": {
+    "Every Monday morning": {
+      "main": [
+        [
+          {
+            "node": "Target profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Target profile": {
+      "main": [
+        [
+          {
+            "node": "Companies that fit the profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Companies that fit the profile": {
+      "main": [
+        [
+          {
+            "node": "One item per company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per company": {
+      "main": [
+        [
+          {
+            "node": "Add to the target list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

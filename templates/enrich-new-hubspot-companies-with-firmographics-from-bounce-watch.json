@@ -1,0 +1,229 @@
+{
+  "name": "Enrich new HubSpot companies with firmographics from Bounce Watch",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Enrich new HubSpot companies with firmographics from Bounce Watch\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nA company record created by hand usually holds a name and a website and nothing else. This workflow fills in the rest — headcount, founding year, country, city and the social profiles — as soon as the record appears.\n\n### How it works\n\nAn hourly schedule asks HubSpot for the companies created or updated since the last sweep. Records with no domain are dropped, because the lookup is keyed on one. The Bounce Watch node returns the profile for that domain, and the HubSpot node writes the fields back onto the same record. Fields we do not hold come back empty and are left alone rather than overwritten with a blank.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Connect your HubSpot credential on both HubSpot nodes.\n3. Check the field mapping on the last node against your own HubSpot properties, and remove any you would rather fill by hand.\n\nA profile lookup spends credits, so the filter in the middle is doing real work: it stops the sweep paying for records it cannot use.\n\n### Customization tips\n\nAdd a custom HubSpot property and map the company description into it. Or run the same shape on a schedule over your whole company list rather than only the recent ones, to backfill an existing database.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## New in the CRM\n\nHourly sweep of recently created or updated companies.\nRecords without a domain stop here.",
+        "height": 300,
+        "width": 680,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Look it up and write it back\n\nOne profile lookup per company,\nmapped onto the same HubSpot record.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        870,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "bw0040-0000-4000-8000-000000000040",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "limit": 25,
+        "filters": {},
+        "resource": "company",
+        "operation": "getRecentlyCreatedUpdated",
+        "authentication": "oAuth2"
+      },
+      "id": "bw0041-0000-4000-8000-000000000041",
+      "name": "Recently added HubSpot companies",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Companies created or updated since the last sweep."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0042-0000-4000-8000-000000000042",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !!($json.properties?.domain?.value || $json.properties?.domain || $json.domain) }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0043-0000-4000-8000-000000000043",
+      "name": "Keep the ones with a domain",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "The lookup is keyed on a domain, and a lookup spends credits. This stops the sweep paying for records it cannot use."
+    },
+    {
+      "parameters": {
+        "resource": "company",
+        "operation": "get",
+        "domain": "={{ ($json.properties?.domain?.value || $json.properties?.domain || $json.domain).toString().toLowerCase().replace(/^https?:\\/\\//, \"\").replace(/^www\\./, \"\").split(\"/\")[0] }}"
+      },
+      "id": "bw0044-0000-4000-8000-000000000044",
+      "name": "Get the company profile",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Base profile only. Fields we do not hold come back empty."
+    },
+    {
+      "parameters": {
+        "resource": "company",
+        "companyId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Recently added HubSpot companies').item.json.companyId || $('Recently added HubSpot companies').item.json.id }}"
+        },
+        "operation": "update",
+        "updateFields": {
+          "city": "={{ $json.company.headquarter_city || undefined }}",
+          "description": "={{ $json.company.description || undefined }}",
+          "yearFounded": "={{ $json.company.founded_year || undefined }}",
+          "countryRegion": "={{ $json.company.headquarter_country || undefined }}",
+          "numberOfEmployees": "={{ $json.company.employee_count || undefined }}",
+          "linkedInCompanyPage": "={{ $json.company.linkedin_url || undefined }}"
+        },
+        "authentication": "oAuth2"
+      },
+      "id": "bw0045-0000-4000-8000-000000000045",
+      "name": "Write the firmographics back",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        1180,
+        0
+      ],
+      "notes": "Empty values resolve to undefined, so a field we do not hold is left alone rather than blanked."
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Recently added HubSpot companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recently added HubSpot companies": {
+      "main": [
+        [
+          {
+            "node": "Keep the ones with a domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep the ones with a domain": {
+      "main": [
+        [
+          {
+            "node": "Get the company profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the company profile": {
+      "main": [
+        [
+          {
+            "node": "Write the firmographics back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

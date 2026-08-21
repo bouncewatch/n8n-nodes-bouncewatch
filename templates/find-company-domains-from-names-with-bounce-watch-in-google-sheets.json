@@ -1,0 +1,309 @@
+{
+  "name": "Find company domains from names with Bounce Watch in Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Find company domains from names with Bounce Watch in Google Sheets\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nA list of company names is not much use to any other tool. Almost everything downstream — enrichment, deduplication, routing — is keyed on a domain. This workflow fills the domain column in for you.\n\n### How it works\n\nA daily schedule reads the sheet. A filter keeps only the rows where the domain cell is still empty, so the run is cheap and repeatable. Each remaining name goes to the Bounce Watch lookup, which returns the candidates it can match. A Settings node takes the top candidate and records how the match was made, so you can spot the ones worth a human glance. The row is then updated in place, matched on the company name.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Pick your Google Sheets credential, then choose the spreadsheet and tab on the read node and again on the write node.\n3. Your sheet needs a Company column and a Domain column. Add a Matched by column if you want the audit trail.\n\n### Customization tips\n\nAdd the country code to the lookup filters when your list spans several markets — a name that is ambiguous worldwide is often unique inside one country. Where no candidate comes back, the row is left as it was rather than filled with a guess; a small review queue beats a wrong domain in a CRM.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Read the sheet\n\nDaily pass over the list.\nRows that already have a domain are skipped.",
+        "height": 300,
+        "width": 680,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Resolve the name\n\nCandidates come back ranked.\nSettings takes the top one and records how it matched.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        870,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "content": "## Write it back\n\nMatched on the company name,\nso the row is updated rather than duplicated.",
+        "height": 300,
+        "width": 200,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        -170
+      ],
+      "id": "sticky-section-3",
+      "name": "Section 3"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "bw0030-0000-4000-8000-000000000030",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sheet1"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        }
+      },
+      "id": "bw0031-0000-4000-8000-000000000031",
+      "name": "Read the company list",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Pick the spreadsheet and tab. The sheet needs a Company column and a Domain column."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0032-0000-4000-8000-000000000032",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !$json.Domain }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0033-0000-4000-8000-000000000033",
+      "name": "Rows with no domain yet",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "Keeps the run cheap and repeatable — a filled row is never looked up twice."
+    },
+    {
+      "parameters": {
+        "resource": "company",
+        "operation": "find",
+        "name": "={{ $json.Company }}",
+        "filters": {
+          "limit": 5
+        }
+      },
+      "id": "bw0034-0000-4000-8000-000000000034",
+      "name": "Look up the domain",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Returns ranked candidates. Add a country code to the filters if your list spans several markets."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0035-0000-4000-8000-000000000035",
+              "name": "Company",
+              "type": "string",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "id": "as0036-0000-4000-8000-000000000036",
+              "name": "Domain",
+              "type": "string",
+              "value": "={{ $json.candidates?.[0]?.domain || \"\" }}"
+            },
+            {
+              "id": "as0037-0000-4000-8000-000000000037",
+              "name": "Matched by",
+              "type": "string",
+              "value": "={{ $json.candidates?.[0] ? $json.matched_by : \"no candidate\" }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0038-0000-4000-8000-000000000038",
+      "name": "Take the top match",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1180,
+        0
+      ],
+      "notes": "No candidate means the row is written back unchanged rather than filled with a guess."
+    },
+    {
+      "parameters": {
+        "columns": {
+          "value": {
+            "Company": "={{ $json.Company }}",
+            "Domain": "={{ $json.Domain }}",
+            "Matched by": "={{ $json[\"Matched by\"] }}"
+          },
+          "schema": [],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Company"
+          ]
+        },
+        "options": {},
+        "operation": "appendOrUpdate",
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sheet1"
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        }
+      },
+      "id": "bw0039-0000-4000-8000-000000000039",
+      "name": "Write the domain back",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1420,
+        0
+      ],
+      "notes": "Matched on Company, so an existing row is updated instead of a new one being added."
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Read the company list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read the company list": {
+      "main": [
+        [
+          {
+            "node": "Rows with no domain yet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rows with no domain yet": {
+      "main": [
+        [
+          {
+            "node": "Look up the domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Look up the domain": {
+      "main": [
+        [
+          {
+            "node": "Take the top match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Take the top match": {
+      "main": [
+        [
+          {
+            "node": "Write the domain back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

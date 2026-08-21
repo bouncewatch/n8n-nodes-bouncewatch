@@ -1,6 +1,21 @@
 {
-  "name": "Post company signals to Slack as they happen",
+  "name": "Post new company signals from Bounce Watch to Slack",
   "nodes": [
+    {
+      "parameters": {
+        "content": "## Post new company signals from Bounce Watch to Slack\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying the date it happened. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nThis template watches the companies on your Bounce Watch watchlist and posts a message to Slack the moment one of them moves.\n\n### How it works\n\nThe Bounce Watch trigger checks your watchlist and hands over each new signal once. A filter drops anything marked unconfirmed, so rumours and inferences never reach you. What is left carries the company, what happened, the date it happened and a link to the company page.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits.\n2. Paste it into the Bounce Watch credential on the trigger node.\n3. Put a few companies on your watchlist first. Use the Bounce Watch node's Watch → Add operation, or add them from your Bounce Watch account. An empty watchlist means an empty trigger.\n4. Pick the Slack channel in the last node.\n\nChecking the watchlist costs no credits. An empty run means nothing matched your watches, not that those companies were quiet.\n\n### Customization tips\n\nRaise the importance threshold on the trigger to hear only about the big moments. Point the trigger at a single company if you only care about one. Or swap Slack for email, a task in your tracker, or a row in a sheet.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
     {
       "parameters": {
         "minWeight": 3,
@@ -10,7 +25,10 @@
       "name": "New signal at a watched company",
       "type": "n8n-nodes-bouncewatch.bounceWatchTrigger",
       "typeVersion": 1,
-      "position": [-220, 0],
+      "position": [
+        -220,
+        0
+      ],
       "credentials": {
         "bounceWatchApi": {
           "id": "1",
@@ -22,11 +40,18 @@
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "version": 2 },
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
           "conditions": [
             {
               "id": "c0000000-0000-4000-8000-000000000001",
-              "operator": { "type": "boolean", "operation": "false", "singleValue": true },
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
               "leftValue": "={{ $json.unconfirmed }}",
               "rightValue": ""
             }
@@ -39,7 +64,10 @@
       "name": "Drop unconfirmed",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2,
-      "position": [40, 0],
+      "position": [
+        40,
+        0
+      ],
       "notes": "Some signals are inference rather than announcement. They carry `unconfirmed`, and a channel post reads as fact — so they stop here."
     },
     {
@@ -51,7 +79,7 @@
           "mode": "name",
           "cachedResultName": ""
         },
-        "text": "=*{{ $json.company.name }}* — {{ $json.label }}\n{{ $json.summary }}\n_{{ $json.date }}{{ $json.date_is_measurement ? ' (picked up on this date, not necessarily when it happened)' : '' }} · weight {{ $json.weight }}/10 · {{ $json.company.country }}_\n{{ $json.company.profile_url }}",
+        "text": "=*{{ $json.company.name }}* — {{ $json.label }}\n{{ $json.summary }}\n_{{ $json.date }}{{ $json.date_is_measurement ? ' (picked up on this date, not necessarily when it happened)' : '' }} · {{ $json.company.country }}_\n{{ $json.company.profile_url }}",
         "otherOptions": {
           "includeLinkToWorkflow": false
         }
@@ -60,20 +88,43 @@
       "name": "Post to Slack",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
-      "position": [300, 0],
+      "position": [
+        300,
+        0
+      ],
       "webhookId": "",
       "notes": "Pick your channel here."
     }
   ],
   "connections": {
     "New signal at a watched company": {
-      "main": [[{ "node": "Drop unconfirmed", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Drop unconfirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Drop unconfirmed": {
-      "main": [[{ "node": "Post to Slack", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": { "executionOrder": "v1" },
+  "settings": {
+    "executionOrder": "v1"
+  },
   "pinData": {},
-  "meta": { "templateCredsSetupCompleted": false }
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
 }

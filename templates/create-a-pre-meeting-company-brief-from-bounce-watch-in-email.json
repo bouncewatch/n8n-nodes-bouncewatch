@@ -1,0 +1,272 @@
+{
+  "name": "Create a pre-meeting company brief from Bounce Watch in email",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Create a pre-meeting company brief from Bounce Watch in email\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nWalk into a call knowing what has moved at the account since anyone last looked. This workflow rescans one company, pulls its dated timeline, and emails it to you as a short brief.\n\n### How it works\n\nA morning schedule starts the run. A Settings node holds the company domain and how far back the brief should reach. The Bounce Watch node queues a fresh scan of that company, then polls the scan until it reports finished — polling is free and it waits for you. Once the scan has landed, the timeline is pulled and the email node sends it. Each line carries the event, its date and, where the date records when we measured a change rather than when it happened, a marker saying so.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Put the company domain into Meeting settings.\n3. Fill in the From and To addresses on the email node and pick your SMTP credential.\n\nA rescan spends credits; polling its status and reading the timeline afterwards is cheap. An empty run means nothing matched the filters, not that those companies were quiet.\n\n### Customization tips\n\nDrive the domain from a calendar entry, a CRM record or a form instead of the Settings node, and the same brief lands for whichever account you are about to meet.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Point it at a company\n\nOne domain, one lookback window.\nSwap this node for a calendar or CRM feed later.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Refresh what we hold\n\nQueue a scan, then wait for it.\nPolling the status costs nothing.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        630,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "content": "## Build and send the brief\n\nThe dated timeline, newest first.\nDates are printed as stamps, not claims.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1110,
+        -170
+      ],
+      "id": "sticky-section-3",
+      "name": "Section 3"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "bw0009-0000-4000-8000-000000000009",
+      "name": "Every weekday morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0010-0000-4000-8000-000000000010",
+              "name": "company_domain",
+              "type": "string",
+              "value": "example.com"
+            },
+            {
+              "id": "as0011-0000-4000-8000-000000000011",
+              "name": "lookback_days",
+              "type": "number",
+              "value": "={{ 90 }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0012-0000-4000-8000-000000000012",
+      "name": "Meeting settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "The company you are meeting, and how far back the brief should reach."
+    },
+    {
+      "parameters": {
+        "resource": "company",
+        "operation": "refresh",
+        "domain": "={{ $json.company_domain }}"
+      },
+      "id": "bw0013-0000-4000-8000-000000000013",
+      "name": "Queue a fresh scan",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        700,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Spends credits. Skip this node if a same-day rescan is more than you need."
+    },
+    {
+      "parameters": {
+        "resource": "company",
+        "operation": "refreshStatus",
+        "batchId": "={{ $json.batch_id }}"
+      },
+      "id": "bw0014-0000-4000-8000-000000000014",
+      "name": "Wait for the scan to finish",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Free to call, and it waits rather than returning immediately."
+    },
+    {
+      "parameters": {
+        "resource": "signal",
+        "operation": "getForCompany",
+        "domain": "={{ $('Meeting settings').first().json.company_domain }}",
+        "splitSignals": false,
+        "filters": {
+          "days": "={{ $('Meeting settings').first().json.lookback_days }}",
+          "limit": 25
+        }
+      },
+      "id": "bw0015-0000-4000-8000-000000000015",
+      "name": "Pull the dated timeline",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "One item per company, with the signals nested, so the email can be built in one pass."
+    },
+    {
+      "parameters": {
+        "fromEmail": "",
+        "toEmail": "",
+        "subject": "=Brief: {{ $json.company.name }}",
+        "emailFormat": "text",
+        "text": "={{ $json.company.name }} · {{ $json.company.country }}{{ $json.company.employees ? \" · \" + $json.company.employees + \" people\" : \"\" }}{{ $json.company.funding_stage ? \" · \" + $json.company.funding_stage : \"\" }}\n{{ $json.company.profile_url }}\n\nWhat has moved, most recent first:\n\n{{ $json.signals.map(s => \"• \" + s.label + \" — \" + s.date + (s.date_is_measurement ? \" (date recorded)\" : \"\") + (s.unconfirmed ? \" (unconfirmed)\" : \"\") + (s.summary ? \"\\n  \" + s.summary : \"\")).join(\"\\n\") }}\n\nDates marked \"date recorded\" are when the change was measured. Lines marked unconfirmed are inference rather than announcement.",
+        "options": {}
+      },
+      "id": "bw0016-0000-4000-8000-000000000016",
+      "name": "Send the brief",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1420,
+        0
+      ],
+      "notes": "Fill in From and To, and pick your SMTP credential."
+    }
+  ],
+  "connections": {
+    "Every weekday morning": {
+      "main": [
+        [
+          {
+            "node": "Meeting settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meeting settings": {
+      "main": [
+        [
+          {
+            "node": "Queue a fresh scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue a fresh scan": {
+      "main": [
+        [
+          {
+            "node": "Wait for the scan to finish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for the scan to finish": {
+      "main": [
+        [
+          {
+            "node": "Pull the dated timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pull the dated timeline": {
+      "main": [
+        [
+          {
+            "node": "Send the brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

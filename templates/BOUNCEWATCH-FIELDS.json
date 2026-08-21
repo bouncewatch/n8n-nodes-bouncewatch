@@ -1,0 +1,90 @@
+[
+  {
+    "name": "bounceWatch",
+    "displayName": "Bounce Watch"
+  },
+  {
+    "name": "domain",
+    "displayName": "Domain"
+  },
+  {
+    "name": "name",
+    "displayName": "Name"
+  },
+  {
+    "name": "batchId",
+    "displayName": "Batch ID"
+  },
+  {
+    "name": "splitSignals",
+    "displayName": "Split Signals Into Separate Items"
+  },
+  {
+    "name": "filters",
+    "displayName": "Filters"
+  },
+  {
+    "name": "categories",
+    "displayName": "Categories"
+  },
+  {
+    "name": "country",
+    "displayName": "Country Code"
+  },
+  {
+    "name": "days",
+    "displayName": "Days"
+  },
+  {
+    "name": "founded_after",
+    "displayName": "Founded After"
+  },
+  {
+    "name": "founded_before",
+    "displayName": "Founded Before"
+  },
+  {
+    "name": "funding_stage",
+    "displayName": "Funding Stage"
+  },
+  {
+    "name": "limit",
+    "displayName": "Limit"
+  },
+  {
+    "name": "max_employees",
+    "displayName": "Maximum Employees"
+  },
+  {
+    "name": "min_employees",
+    "displayName": "Minimum Employees"
+  },
+  {
+    "name": "min_weight",
+    "displayName": "Minimum Weight"
+  },
+  {
+    "name": "require_all_keys",
+    "displayName": "Require All Keys"
+  },
+  {
+    "name": "signal_keys",
+    "displayName": "Signal Keys"
+  },
+  {
+    "name": "sort",
+    "displayName": "Sort"
+  },
+  {
+    "name": "watchOptions",
+    "displayName": "Options"
+  },
+  {
+    "name": "label",
+    "displayName": "Label"
+  },
+  {
+    "name": "deliver_webhook",
+    "displayName": "Deliver Webhook"
+  }
+]

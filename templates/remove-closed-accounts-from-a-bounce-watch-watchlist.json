@@ -1,0 +1,189 @@
+{
+  "name": "Remove closed accounts from a Bounce Watch watchlist",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Remove closed accounts from a Bounce Watch watchlist\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nA watchlist that only grows stops being a watchlist. Once an account is won, lost or parked, the news about it is no longer news you act on. This workflow takes those companies back off the list.\n\n### How it works\n\nA daily schedule asks HubSpot for the companies whose records changed since the last sweep. A filter keeps only the ones whose lifecycle stage has reached a closed-out value — customer, evangelist or other by default. Each of those goes to the Bounce Watch node, which stops the watch for that domain. Events the watch already queued stay collectable, so nothing you had not read yet is thrown away.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Connect your HubSpot credential on the second node.\n3. Edit the list of closed-out lifecycle stages in the filter to match how your pipeline is actually labelled.\n\nStopping a watch costs no credits, and it frees a slot for the next account worth following.\n\n### Customization tips\n\nDrive this from a deal stage rather than a lifecycle stage if that is where \"closed\" lives in your CRM. Or run it against a spreadsheet column instead of HubSpot, if the list of accounts you have stopped chasing is kept somewhere simpler.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## What changed in the CRM\n\nDaily sweep of recently updated companies.\nOnly closed-out lifecycle stages get through.",
+        "height": 300,
+        "width": 680,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Stop the watch\n\nFree to call.\nEvents already queued stay collectable.",
+        "height": 300,
+        "width": 200,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        870,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      },
+      "id": "bw0046-0000-4000-8000-000000000046",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "limit": 25,
+        "filters": {},
+        "resource": "company",
+        "operation": "getRecentlyCreatedUpdated",
+        "authentication": "oAuth2"
+      },
+      "id": "bw0047-0000-4000-8000-000000000047",
+      "name": "Recently updated HubSpot companies",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Companies created or updated since the last sweep."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0048-0000-4000-8000-000000000048",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ [\"customer\",\"evangelist\",\"other\"].includes(($json.properties?.lifecyclestage?.value || $json.properties?.lifecyclestage || \"\").toString().toLowerCase()) && !!($json.properties?.domain?.value || $json.properties?.domain) }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0049-0000-4000-8000-000000000049",
+      "name": "Closed out in the CRM",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "Edit this list to match how your own pipeline labels a closed-out account."
+    },
+    {
+      "parameters": {
+        "resource": "watch",
+        "operation": "stop",
+        "domain": "={{ ($json.properties?.domain?.value || $json.properties?.domain).toString().toLowerCase().replace(/^https?:\\/\\//, \"\").replace(/^www\\./, \"\").split(\"/\")[0] }}"
+      },
+      "id": "bw0050-0000-4000-8000-000000000050",
+      "name": "Stop watching",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Stopping a watch costs no credits and frees a slot for the next account."
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Recently updated HubSpot companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recently updated HubSpot companies": {
+      "main": [
+        [
+          {
+            "node": "Closed out in the CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Closed out in the CRM": {
+      "main": [
+        [
+          {
+            "node": "Stop watching",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

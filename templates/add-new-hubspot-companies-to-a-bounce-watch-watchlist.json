@@ -1,0 +1,234 @@
+{
+  "name": "Add new HubSpot companies to a Bounce Watch watchlist",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Add new HubSpot companies to a Bounce Watch watchlist\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nEvery company that lands in your HubSpot CRM goes onto your Bounce Watch watchlist, so a new account is being monitored from the day someone creates it.\n\n### How it works\n\nA schedule runs hourly and asks HubSpot for the companies created or updated since the last sweep. Records with no domain are dropped, because a watch is keyed on a domain and a CRM row without one cannot be matched to a company. A Settings node builds the domain and the label the watch will carry, and the Bounce Watch node adds it. Adding a company that is already watched updates the existing watch instead of duplicating it, so the sweep is safe to leave running.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Connect your HubSpot credential on the second node.\n3. Open Watch settings and change the label prefix if \"CRM\" is not what you want.\n4. In the watch options, raise the importance floor if you only want the big moments. The default already keeps background chatter off the watch.\n\nCollecting matches later costs no credits. An empty run means nothing matched the filters, not that those companies were quiet.\n\n### Customization tips\n\nPair this with the Bounce Watch trigger to route matches into Slack, email or a task tracker. Narrow the watch to a few signal types if you only care about funding or senior hires.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Pull from HubSpot\n\nHourly sweep of recently created or updated companies.\nRows without a domain stop here.",
+        "height": 300,
+        "width": 680,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Start watching\n\nSettings builds the domain and the label.\nThe watch is created or updated in place.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        870,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "bw0001-0000-4000-8000-000000000001",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "limit": 25,
+        "filters": {},
+        "resource": "company",
+        "operation": "getRecentlyCreatedUpdated",
+        "authentication": "oAuth2"
+      },
+      "id": "bw0002-0000-4000-8000-000000000002",
+      "name": "Recently added HubSpot companies",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Companies created or updated since the last sweep."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0003-0000-4000-8000-000000000003",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !!($json.properties?.domain?.value || $json.properties?.domain || $json.domain) }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0004-0000-4000-8000-000000000004",
+      "name": "Keep the ones with a domain",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "A watch is keyed on a domain. A CRM record without one cannot be matched to a company."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0005-0000-4000-8000-000000000005",
+              "name": "domain",
+              "type": "string",
+              "value": "={{ ($json.properties?.domain?.value || $json.properties?.domain || $json.domain).toString().toLowerCase().replace(/^https?:\\/\\//, \"\").replace(/^www\\./, \"\").split(\"/\")[0] }}"
+            },
+            {
+              "id": "as0006-0000-4000-8000-000000000006",
+              "name": "watch_label",
+              "type": "string",
+              "value": "=CRM — {{ $json.properties?.name?.value || $json.properties?.name || \"unnamed account\" }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0007-0000-4000-8000-000000000007",
+      "name": "Watch settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        940,
+        0
+      ],
+      "notes": "Change the label prefix here if \"CRM\" is not what you want to see on the watch."
+    },
+    {
+      "parameters": {
+        "resource": "watch",
+        "operation": "add",
+        "domain": "={{ $json.domain }}",
+        "watchOptions": {
+          "label": "={{ $json.watch_label }}",
+          "min_weight": 3
+        }
+      },
+      "id": "bw0008-0000-4000-8000-000000000008",
+      "name": "Add to the watchlist",
+      "type": "n8n-nodes-bouncewatch.bounceWatch",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Adding a company that is already watched updates the watch rather than creating a second one."
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Recently added HubSpot companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recently added HubSpot companies": {
+      "main": [
+        [
+          {
+            "node": "Keep the ones with a domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep the ones with a domain": {
+      "main": [
+        [
+          {
+            "node": "Watch settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watch settings": {
+      "main": [
+        [
+          {
+            "node": "Add to the watchlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

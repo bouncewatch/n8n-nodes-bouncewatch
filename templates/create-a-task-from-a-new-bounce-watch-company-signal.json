@@ -1,0 +1,212 @@
+{
+  "name": "Create a task from a new Bounce Watch company signal",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Create a task from a new Bounce Watch company signal\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying its own date. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nAn alert you read and forget is worth less than a task somebody owns. This workflow turns each new signal at a watched company into a row in a task database.\n\n### How it works\n\nThe Bounce Watch trigger checks your watchlist and hands over each new signal once. A filter drops anything marked unconfirmed, so rumours and inferences never become work. A Settings node writes the task title and the body — what happened, the date, the company and a link to its profile — and the Notion node creates the page in your task database.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits. Paste it into the Bounce Watch credential.\n2. Put a few companies on your watchlist first. Use the Bounce Watch node's Watch → Add operation, or add them from your Bounce Watch account. An empty watchlist means an empty trigger.\n3. Connect your Notion credential, choose the task database, and map the property names on the last node to the ones your database actually uses.\n\nChecking the watchlist costs no credits. An empty run means nothing matched your watches, not that those companies were quiet.\n\n### Customization tips\n\nSwap Notion for Airtable, a spreadsheet or any tracker with an n8n node — only the last node changes. Raise the importance threshold on the trigger if you only want a task for the big moments, or point the trigger at a single company.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Catch the signal\n\nOne item per new signal at a watched company.\nUnconfirmed inferences stop here.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        150,
+        -170
+      ],
+      "id": "sticky-section-1",
+      "name": "Section 1"
+    },
+    {
+      "parameters": {
+        "content": "## Open the task\n\nTitle and body are built in Settings.\nMap the property names to your own database.",
+        "height": 300,
+        "width": 440,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        630,
+        -170
+      ],
+      "id": "sticky-section-2",
+      "name": "Section 2"
+    },
+    {
+      "parameters": {
+        "minWeight": 3,
+        "limit": 25
+      },
+      "id": "bw0023-0000-4000-8000-000000000023",
+      "name": "New signal at a watched company",
+      "type": "n8n-nodes-bouncewatch.bounceWatchTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "bounceWatchApi": {
+          "id": "1",
+          "name": "Bounce Watch account"
+        }
+      },
+      "notes": "Polls the companies this API key watches. The first poll records what is already there without firing — history is not news."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "as0024-0000-4000-8000-000000000024",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !$json.unconfirmed }}",
+              "rightValue": ""
+            }
+          ]
+        }
+      },
+      "id": "bw0025-0000-4000-8000-000000000025",
+      "name": "Drop unconfirmed",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        0
+      ],
+      "notes": "Some signals are inference rather than announcement. A task reads as fact, so those stop here."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "assignments": {
+          "assignments": [
+            {
+              "id": "as0026-0000-4000-8000-000000000026",
+              "name": "task_title",
+              "type": "string",
+              "value": "={{ $json.company.name }} — {{ $json.label }}"
+            },
+            {
+              "id": "as0027-0000-4000-8000-000000000027",
+              "name": "task_body",
+              "type": "string",
+              "value": "={{ $json.summary || $json.label }}\n\n{{ $json.company.name }} · {{ $json.company.country }}\n{{ $json.date }}{{ $json.date_is_measurement ? \" (the date the change was recorded)\" : \"\" }}\n{{ $json.company.profile_url }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0028-0000-4000-8000-000000000028",
+      "name": "Task fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        700,
+        0
+      ],
+      "notes": "Everything the task will say, in one place."
+    },
+    {
+      "parameters": {
+        "options": {},
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Name|title",
+              "title": "={{ $json.task_title }}"
+            },
+            {
+              "key": "Notes|rich_text",
+              "textContent": "={{ $json.task_body }}"
+            }
+          ]
+        }
+      },
+      "id": "bw0029-0000-4000-8000-000000000029",
+      "name": "Create the task",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        0
+      ],
+      "notes": "Choose your task database and rename these properties to match it."
+    }
+  ],
+  "connections": {
+    "New signal at a watched company": {
+      "main": [
+        [
+          {
+            "node": "Drop unconfirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Drop unconfirmed": {
+      "main": [
+        [
+          {
+            "node": "Task fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task fields": {
+      "main": [
+        [
+          {
+            "node": "Create the task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

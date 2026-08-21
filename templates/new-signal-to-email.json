@@ -1,6 +1,21 @@
 {
-  "name": "Email me when something happens at a company I watch",
+  "name": "Send new company signals from Bounce Watch to email",
   "nodes": [
+    {
+      "parameters": {
+        "content": "## Send new company signals from Bounce Watch to email\n\nBounce Watch tells you what just happened at a company and when — funding, senior hires, new offices, customer wins and partnerships, each carrying the date it happened. What the API covers: bouncewatch.com/products/data-enrichment-api\n\nThis template watches the companies on your Bounce Watch watchlist and emails you the moment one of them moves.\n\n### How it works\n\nThe Bounce Watch trigger checks your watchlist and hands over each new signal once. A filter drops anything marked unconfirmed, so rumours and inferences never reach you. What is left carries the company, what happened, the date it happened and a link to the company page.\n\n### Setup\n\n1. Get an API key at bouncewatch.com/register/api. It is free, no card, and every new account starts with 2,500 credits.\n2. Paste it into the Bounce Watch credential on the trigger node.\n3. Put a few companies on your watchlist first. Use the Bounce Watch node's Watch → Add operation, or add them from your Bounce Watch account. An empty watchlist means an empty trigger.\n4. Set the from and to addresses on the email node, and pick your SMTP credential.\n\nChecking the watchlist costs no credits. An empty run means nothing matched your watches, not that those companies were quiet.\n\n### Customization tips\n\nRaise the importance threshold on the trigger to hear only about the big moments. Point the trigger at a single company if you only care about one. Or swap email for Slack, a task in your tracker, or a row in a sheet.",
+        "height": 620,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "sticky-overview",
+      "name": "Sticky Note"
+    },
     {
       "parameters": {
         "minWeight": 3,
@@ -61,7 +76,7 @@
         "toEmail": "",
         "subject": "={{ $json.company.name }} — {{ $json.label }}",
         "emailFormat": "text",
-        "text": "={{ $json.summary }}\n\n{{ $json.company.name }} · {{ $json.company.country }}{{ $json.company.employees ? \" · \" + $json.company.employees + \" people\" : \"\" }}{{ $json.company.funding_stage ? \" · \" + $json.company.funding_stage : \"\" }}\n{{ $json.label }} · weight {{ $json.weight }}/10\n{{ $json.date }}{{ $json.date_is_measurement ? \" (the date we picked it up, not necessarily when it happened)\" : \"\" }}\n\n{{ $json.company.profile_url }}",
+        "text": "={{ $json.summary }}\n\n{{ $json.company.name }} · {{ $json.company.country }}{{ $json.company.employees ? \" · \" + $json.company.employees + \" people\" : \"\" }}{{ $json.company.funding_stage ? \" · \" + $json.company.funding_stage : \"\" }}\n{{ $json.label }}\n{{ $json.date }}{{ $json.date_is_measurement ? \" (the date we picked it up, not necessarily when it happened)\" : \"\" }}\n\n{{ $json.company.profile_url }}",
         "options": {}
       },
       "id": "b1a7c0de-0003-4000-8000-000000000003",

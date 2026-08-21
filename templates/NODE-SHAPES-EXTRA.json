@@ -1,0 +1,76 @@
+{
+  "_source": "Harvested the same way as NODE-SHAPES.json, from published workflows on api.n8n.io/api/templates/workflows/<id>. These are the node types templates 3-20 need that NODE-SHAPES.json does not carry. Same rule applies: use these type strings and typeVersions verbatim.",
+  "manualTrigger": {
+    "type": "n8n-nodes-base.manualTrigger",
+    "typeVersion": 1,
+    "parameters": {}
+  },
+  "splitOut": {
+    "type": "n8n-nodes-base.splitOut",
+    "typeVersion": 1,
+    "parameters": {
+      "options": {},
+      "fieldToSplitOut": "domains"
+    }
+  },
+  "aggregate": {
+    "type": "n8n-nodes-base.aggregate",
+    "typeVersion": 1,
+    "parameters": {
+      "options": {},
+      "aggregate": "aggregateAllItemData",
+      "destinationFieldName": "data"
+    }
+  },
+  "googleSheetsAppend": {
+    "type": "n8n-nodes-base.googleSheets",
+    "typeVersion": 4.5,
+    "parameters": {
+      "columns": {
+        "value": {},
+        "schema": [],
+        "mappingMode": "defineBelow",
+        "matchingColumns": []
+      },
+      "options": {},
+      "operation": "append",
+      "sheetName": { "__rl": true, "mode": "name", "value": "Sheet1" },
+      "documentId": { "__rl": true, "mode": "id", "value": "YOUR_SHEET_ID" }
+    }
+  },
+  "openAi": {
+    "type": "@n8n/n8n-nodes-langchain.openAi",
+    "typeVersion": 1.8,
+    "parameters": {
+      "modelId": { "__rl": true, "mode": "list", "value": "gpt-4o-mini", "cachedResultName": "GPT-4O-MINI" },
+      "options": {},
+      "messages": { "values": [{ "role": "system", "content": "..." }, { "content": "=..." }] }
+    }
+  },
+  "notionDatabasePageCreate": {
+    "type": "n8n-nodes-base.notion",
+    "typeVersion": 2.2,
+    "parameters": {
+      "options": {},
+      "resource": "databasePage",
+      "databaseId": { "__rl": true, "mode": "list", "value": "" },
+      "propertiesUi": {
+        "propertyValues": [
+          { "key": "Name|title", "title": "=..." },
+          { "key": "Notes|rich_text", "textContent": "=..." }
+        ]
+      }
+    }
+  },
+  "hubspotGetRecentCompanies": {
+    "type": "n8n-nodes-base.hubspot",
+    "typeVersion": 2.1,
+    "parameters": {
+      "limit": 25,
+      "filters": {},
+      "resource": "company",
+      "operation": "getRecentlyCreatedUpdated",
+      "authentication": "oAuth2"
+    }
+  }
+}
