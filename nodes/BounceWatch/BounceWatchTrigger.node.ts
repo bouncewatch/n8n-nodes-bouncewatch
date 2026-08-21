@@ -97,14 +97,28 @@ export class BounceWatchTrigger implements INodeType {
 			});
 		}
 
+		// Pressing "Fetch Test Event" should show what the watchlist holds. Nothing
+		// is remembered on a manual run, so switching the workflow on afterwards
+		// still treats everything as history rather than as news.
+		if (this.getMode() === 'manual') {
+			const sample = fresh.length ? fresh : events.map((event) => ({
+				json: {
+					company: event.company ?? {},
+					watch_label: event.label,
+					noticed_at: event.noticed_at,
+					...((event.signal ?? {}) as IDataObject),
+				},
+			}));
+			return sample.length
+				? [sample]
+				: [[{ json: { message: 'Nothing on the watchlist has moved yet.' } }]];
+		}
+
 		// Everything already there when the trigger was switched on is history, not
 		// news — remember it, but do not fire the workflow for it.
 		staticData.seen = keys.slice(-2000);
 
 		if (firstRun) return null;
-		if (this.getMode() === 'manual' && fresh.length === 0) {
-			return [[{ json: { message: 'Nothing new since the last check.' } }]];
-		}
 
 		return fresh.length ? [fresh] : null;
 	}
